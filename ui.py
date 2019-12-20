@@ -1,6 +1,9 @@
 import sys,os
 import curses
+import datetime
+import fnmatch
 from states import GameStates
+
 
 class GameUI:
 
@@ -110,6 +113,33 @@ class GameUI:
       i += 1
 
 
+  def save_game(self):
+    filename = "Game_" + "_".join(datetime.datetime.now().strftime("%c").split(" "))
+    self.game_state.save_game_to_file(filename=filename)
+
+
+  def get_game_files(self):
+    filenames = []
+    for f in os.listdir("."):
+      if fnmatch.fnmatch(f, "Game_"):
+        filenames.append(f)
+
+    return filenames[:9]
+
+
+  def draw_dir(self, stdscr):
+    current_line = self.start_y + 14
+    i = 1
+    for fn in self.get_game_files():
+      stdscr.addstr(current_line, self.start_x + 1, "{}. {}".format(i, fn))
+      current_line += 1
+      i += 1
+
+
+  def load_game(self, filename):
+    result = self.game_state.load_game_from_file(filename=filename)
+
+
   def generate_draw_func(self):
     def draw_func(stdscr):
       k = 0
@@ -127,13 +157,22 @@ class GameUI:
 
       # Loop where k is the last character pressed
       while (k != ord('q')):
-
+        
+        load_game = False
+      
         if k == ord('a'):
           self.game_state.select_tile(self.cursor_y, self.cursor_x)
         elif k == ord('u'):
           self.game_state.undo_selection()
         elif k == ord('x'):
           self.game_state.play_selected_word()
+        elif k == ord('s'):
+          self.save_game()
+        elif k == ord('i'):
+          load_game = True
+        elif k >= ord('1') and k <= ord('9'):
+          filenames = self.get_game_files()
+          self.load_game(filenames[k - ord('1')])
 
         # Initialization
         stdscr.clear()
@@ -143,6 +182,9 @@ class GameUI:
         self.draw_frame(stdscr)
         self.draw_input(stdscr)
         self.draw_wordlist(stdscr)
+
+        if load_game:
+          self.draw_dir(stdscr)
 
         for i in range(5):
           for j in range(5):

@@ -7,6 +7,70 @@ class GameStates:
     self.selected_tiles = []
 
 
+  def save_game_to_file(self, filename):
+    rec = self.game_state_to_str()
+    with open(filename, 'w') as fn:
+      fn.write("{}\n".format(rec))
+
+
+  def load_game_from_file(self, filename):
+    with open(filename, 'r') as fn:
+      line = fn.readline()
+      line = line.strip()
+      result = self.load_game_state_from_str(line)
+
+      if not result:
+        print("Failed to load game from file")
+        return False
+
+    return True
+
+
+  def game_state_to_str(self):
+    entry = self.game_str
+    entry += ";"
+    entry += ",".join([str(s) for s in self.game_state])
+    entry += ";"
+
+    histitems = [",".join([str(it) for it in item]) for item in self.history]
+    entry += "|".join(histitems)
+    entry += "#"
+    return entry
+
+
+  def load_game_state_from_str(self, s):
+    entries = s.split(";")
+    
+    if len(entries) != 3:
+      return False
+    
+    if len(entries[0]) != 25 or not entries[0].isalpha() or not entries[0].islower():
+      return False
+    
+    self.game_str = entries[0]
+
+    self.game_state = [int(item) for item in entries[1].split(",")]
+
+    if len(self.game_state) != 25:
+      return False
+
+    for s in self.game_state:
+      if s > 1 or s < -1:
+        return False
+
+    if entries[2][-1] != "#": # check sanity
+      return False
+
+    self.history = [[int(it) for it in row.split(",")] for row in entries[2][:-1].split("|")]
+
+    for row in self.history:
+      for it in row:
+        if it < 0 or it > 24:
+          return False
+
+    return True
+
+
   def get_tile_state(self, y, x):
     return self.game_state[5*y+x]
 
@@ -78,7 +142,7 @@ class GameStates:
 
 
   def get_played_words(self):
-    return map(self.get_word, self.history)
+    return [self.get_word(item) for item in self.history]
 
 
   def is_protected_tile(self, y, x):
