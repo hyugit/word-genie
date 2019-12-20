@@ -1,21 +1,19 @@
 import sys,os
 import curses
+from states import GameStates
 
-DEFAULT_STATE = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+class GameUI:
 
-class Board:
-
-  def __init__(self, start_y = 0, start_x = 0, game = "dmegedsnrictrxmutkhwtiake", state = DEFAULT_STATE):
+  def __init__(self, state, start_y = 0, start_x = 0):
     self.cursor_y = 0
     self.cursor_x = 0
-    self.game_str = game
     self.game_state = state
     self.start_y = start_y
     self.start_x = start_x
 
 
   def draw_frame(self, stdscr):
-    current_line = self.start_y + 1
+    current_line = self.start_y + 2
 
     stdscr.addstr(current_line, self.start_x, "┏━━━┳━━━┳━━━┳━━━┳━━━┓")
     current_line += 1
@@ -35,78 +33,81 @@ class Board:
 
   def tile_color(self, cursor_y, cursor_x):
     color_id = 0
-    tile_state = self.game_state[5*cursor_y+cursor_x]
+    tile_state = self.game_state.get_tile_state(cursor_y, cursor_x)
 
     if tile_state == 1:
       color_id = 1
     elif tile_state == -1:
       color_id = 3
 
-    if color_id != 0 and self.surrounded(cursor_y, cursor_x):
+    if color_id != 0 and self.game_state.is_protected_tile(cursor_y, cursor_x):
       color_id += 1
 
     return color_id
 
 
-  def surrounded(self, cursor_y, cursor_x):
-    tile_state = self.game_state[5*cursor_y+cursor_x]
-    
-    for i in [-1, 1]:
-      if cursor_y + i > 4 or cursor_y + i < 0:
-        continue
-      if self.game_state[5*(cursor_y+i)+cursor_x] != tile_state:
-        return False
-    
-    for i in [-1, 1]:
-      if cursor_x + i > 4 or cursor_x + i < 0:
-        continue
-      if self.game_state[5*(cursor_y)+cursor_x+i] != tile_state:
-        return False
-
-    return True
-
-
-  def draw_tile(self, stdscr, cursor_y, cursor_x):
-    center_y = self.start_y + 2 + cursor_y * 2
-    center_x = self.start_x + 2 + cursor_x * 4
-    color_id = self.tile_color(cursor_y, cursor_x)
+  def draw_tile(self, stdscr, y, x):
+    center_y = self.start_y + 3 + y * 2
+    center_x = self.start_x + 2 + x * 4
+    color_id = self.tile_color(y, x)
 
     stdscr.attron(curses.color_pair(color_id))
     stdscr.addstr(center_y, center_x + 1, ' ')
     stdscr.addstr(center_y, center_x - 1, ' ')
-    stdscr.addstr(center_y, center_x, self.game_str[5*cursor_y+cursor_x])
+    stdscr.addstr(center_y, center_x, self.game_state.get_letter(y, x))
     stdscr.attroff(curses.color_pair(color_id))
 
 
   def move_cursor(self, stdscr, key):
-    cursor_y = self.cursor_y
-    cursor_x = self.cursor_x
+    y = self.cursor_y
+    x = self.cursor_x
 
     if key == ord('j'):
-      cursor_y = cursor_y + 1
+      y = y + 1
     elif key == ord('k'):
-      cursor_y = cursor_y - 1
+      y = y - 1
     elif key == ord('l'):
-      cursor_x = cursor_x + 1
+      x = x + 1
     elif key == ord('h'):
-      cursor_x = cursor_x - 1
+      x = x - 1
 
-    cursor_x = max(0, cursor_x)
-    cursor_x = min(4, cursor_x)
+    x = max(0, x)
+    x = min(4, x)
 
-    cursor_y = max(0, cursor_y)
-    cursor_y = min(4, cursor_y)
+    y = max(0, y)
+    y = min(4, y)
 
-    stdscr.move(2 + 2 * cursor_y, 2 + 4 * cursor_x)
+    stdscr.move(
+      self.start_y + 3 + 2 * y,
+      self.start_x + 2 + 4 * x
+    )
     
-    self.cursor_y = cursor_y
-    self.cursor_x = cursor_x
+    self.cursor_y = y
+    self.cursor_x = x
 
 
   def draw_title(self, stdscr):
     stdscr.attron(curses.A_BOLD)
     stdscr.addstr(self.start_y, self.start_x + 1, "Letterpress Console")
     stdscr.attroff(curses.A_BOLD)
+
+
+  def draw_input(self, stdscr):
+    input_str = self.game_state.get_selected_letters()
+    stdscr.addstr(self.start_y + 1, self.start_x, "play: ")
+    stdscr.attron(curses.A_UNDERLINE)
+    stdscr.addstr(self.start_y + 1, self.start_x + 6, input_str)
+    stdscr.attroff(curses.A_UNDERLINE)
+    
+  def draw_wordlist(self, stdscr):
+    words = self.game_state.get_played_words()
+    current_line = 3 + self.start_y
+    current_row = 23 + self.start_x
+    i = 1
+    for word in words:
+      stdscr.addstr(current_line, current_row, "{}. {}".format(i, word))
+      current_line += 1
+      i += 1
 
 
   def generate_draw_func(self):
@@ -127,16 +128,26 @@ class Board:
       # Loop where k is the last character pressed
       while (k != ord('q')):
 
+        if k == ord('a'):
+          self.game_state.select_tile(self.cursor_y, self.cursor_x)
+        elif k == ord('u'):
+          self.game_state.undo_selection()
+        elif k == ord('x'):
+          self.game_state.play_selected_word()
+
         # Initialization
         stdscr.clear()
 
-        self.draw_title(stdscr)
-
         # Rendering the board
+        self.draw_title(stdscr)
         self.draw_frame(stdscr)
+        self.draw_input(stdscr)
+        self.draw_wordlist(stdscr)
+
         for i in range(5):
           for j in range(5):
-            self.draw_tile(stdscr, i, j)
+            if not self.game_state.is_selected_tile(i, j):
+              self.draw_tile(stdscr, i, j)
 
         self.move_cursor(stdscr, k)
 
@@ -149,8 +160,9 @@ class Board:
     return draw_func
 
 def ui():
-  board = Board(start_y = 0, start_x = 0, game = "dmegedsnrictrxmutkhwtiake")
-  draw_func = board.generate_draw_func()
+  states = GameStates()
+  ui = GameUI(state = states, start_y = 1, start_x = 2)
+  draw_func = ui.generate_draw_func()
   curses.wrapper(draw_func)
 
 if __name__ == "__main__":
