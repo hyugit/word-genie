@@ -1,6 +1,7 @@
 
 import re
 from genie import Genie
+import timeit
 
 def letterpress():
   genie = Genie()
@@ -13,6 +14,16 @@ def letterpress():
     if cmd == "/":
       print("Exiting...")
       exit()
+
+    elif cmd == ";":
+      genie.petrify()
+
+    elif cmd == "`":
+      genie = Genie()
+      genie.awake("ogtyyhulrsrtelldbpedwymed")
+      
+      result = timeit.Timer(genie.petrify).timeit(number=100)
+      print(result)
 
     else:
       if not filtered_cmd:

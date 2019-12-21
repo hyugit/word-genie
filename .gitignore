@@ -1,4 +1,6 @@
 .DS_Store
+Game_*
 dictionary
+.idea
 
 __pycache__/

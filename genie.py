@@ -1,95 +1,107 @@
+DEFAULT_WORDLIST = "wordlist"
+DEFAULT_DICTIONARY = "dictionary"
+
+
 class Genie:
 
-  def __init__(self, wordlist = None):
-    self._dictionary = {}
-    self._wordlist = "wordlist"
+    def __init__(self):
+        self._dictionary = {}
 
-    if wordlist != None:
-      self._wordlist = str(wordlist)
+    def awake(self, game):
+        if not game.isalpha() or not game.islower() or len(game) != 25:
+            print("Invalid game string, going back to sleep...")
+            return
 
-  def awake(self, game):
-    if not game.isalpha() or not game.islower() or len(game) != 25:
-      print("Invalid game string, going back to sleep...")
-      return
+        self._reload()
+        result = self._trim(game)
 
-    self._reload()
-    result = self._trim(game)
+        print("Woke! {} words available!".format(result))
+        return result
 
-    print("Woke! {} words available!".format(result))
-    return result
+    def ask(self, letters):
+        if not letters.isalpha() or not letters.islower():
+            print("Invalid query...")
+            return
 
-  def ask(self, letters):
-    if not letters.isalpha() or not letters.islower():
-      print("Invalid query...")
-      return
+        result = self._find(letters)
+        return result
 
-    result = self._find(letters)
+    def verify(self, word):
+        if not word.isalpha() or not word.islower():
+            print("Invalid query...")
+            return False
 
-    return result
+        key = "".join(sorted(word))
+        if not self._dictionary.get(key):
+            return False
 
-  def _reload(self):
-    print("Reading word list...")
+        if word in self._dictionary.get(key):
+            return True
 
-    with open(self._wordlist) as wl:
-      line = wl.readline()
+        return False
 
-      while line:
-        line = wl.readline()
-        word = line.strip()
-        index = "".join(sorted(word))
+    def _reload(self):
+        print("Reading word list...")
 
-        if index in self._dictionary:
-          self._dictionary[index].append(word)
+        with open(DEFAULT_WORDLIST) as wl:
+            line = wl.readline()
 
-        else:
-          self._dictionary[index] = [word]
+            while line:
+                line = wl.readline()
+                word = line.strip()
+                index = "".join(sorted(word))
 
-  def _trim(self, game):
-    letters = "".join(sorted(game))
-    available_words = 0
+                if index in self._dictionary:
+                    self._dictionary[index].append(word)
 
-    for key in list(self._dictionary):
-      tmp_letter = letters
+                else:
+                    self._dictionary[index] = [word]
 
-      for k in key:
-        if tmp_letter.find(k) < 0:
-          self._dictionary.pop(key, None)
+    def _trim(self, game):
+        letters = "".join(sorted(game))
+        available_words = 0
 
-        else:
-          tmp_letter = tmp_letter.replace(k, "", 1)
+        for key in list(self._dictionary):
+            tmp_letter = letters
 
-      if self._dictionary.get(key):
-        available_words += len(self._dictionary.get(key))
+            for k in key:
+                if tmp_letter.find(k) < 0:
+                    self._dictionary.pop(key, None)
 
-    return available_words
+                else:
+                    tmp_letter = tmp_letter.replace(k, "", 1)
 
-  def _find(self, word):
-    letters = sorted(word)
-    result = []
+            if self._dictionary.get(key):
+                available_words += len(self._dictionary.get(key))
 
-    for key in sorted(list(self._dictionary), key = len, reverse = True):
-      tmp_key = key
-      found = True
+        return available_words
 
-      for letter in letters:
-        if tmp_key.find(letter) < 0:
-          found = False
-          break
+    def _find(self, word):
+        letters = sorted(word)
+        result = []
 
-        tmp_key = tmp_key.replace(letter, "", 1)
+        for key in sorted(list(self._dictionary), key = len, reverse = True):
+            tmp_key = key
+            found = True
 
-      if found:
-        result.extend(self._dictionary.get(key) or [])
-        
-    return result
+            for letter in letters:
+                if tmp_key.find(letter) < 0:
+                    found = False
+                    break
 
-  def petrify(self):
-    dictfile = 'dictionary'
-    print("Writing dictionary...")
+                tmp_key = tmp_key.replace(letter, "", 1)
 
-    with open(dictfile, 'w') as df:
-      for k in sorted(list(self._dictionary), key = len, reverse = True):
-        words = ",".join(self._dictionary.get(k) or [])
-        df.write("%s:%s\n" % (k, words))
+            if found:
+                result.extend(self._dictionary.get(key) or [])
+
+        return result
+
+    def petrify(self):
+        print("Writing dictionary...")
+
+        with open(DEFAULT_DICTIONARY, 'w') as df:
+            for k in sorted(list(self._dictionary), key=len, reverse=True):
+                words = ",".join(self._dictionary.get(k) or [])
+                df.write("%s:%s\n" % (k, words))
 
 

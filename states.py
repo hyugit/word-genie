@@ -1,166 +1,143 @@
 class GameStates:
 
-  def __init__(self):
-    self.game_str = "a"*25
-    self.game_state = [0]*25
-    self.history = []
-    self.selected_tiles = []
+    def __init__(self, genie, game_str="a"*25, game_state=[0]*25, history=[]):
+        self.game_str = game_str
+        self.game_state = game_state
+        self.history = history
+        self.selected_tiles = []
+        self.genie = genie
 
+    def to_str(self):
+        entry = self.game_str
+        entry += ";"
 
-  def save_game_to_file(self, filename):
-    rec = self.game_state_to_str()
-    with open(filename, 'w') as fn:
-      fn.write("{}\n".format(rec))
+        entry += ",".join([str(s) for s in self.game_state])
+        entry += ";"
 
+        items = [",".join([str(it) for it in item]) for item in self.history]
+        entry += "|".join(items)
+        entry += "#"
 
-  def load_game_from_file(self, filename):
-    with open(filename, 'r') as fn:
-      line = fn.readline()
-      line = line.strip()
-      result = self.load_game_state_from_str(line)
+        return entry
 
-      if not result:
-        print("Failed to load game from file")
-        return False
+    def from_str(self, s):
+        entries = s.split(";")
 
-    return True
+        if len(entries) != 3:
+            return False
 
+        if len(entries[0]) != 25 or not entries[0].isalpha() or not entries[0].islower():
+            return False
 
-  def game_state_to_str(self):
-    entry = self.game_str
-    entry += ";"
-    entry += ",".join([str(s) for s in self.game_state])
-    entry += ";"
+        self.game_str = entries[0]
+        self.game_state = [int(item) for item in entries[1].split(",")]
 
-    histitems = [",".join([str(it) for it in item]) for item in self.history]
-    entry += "|".join(histitems)
-    entry += "#"
-    return entry
+        if len(self.game_state) != 25:
+            return False
 
+        for s in self.game_state:
+            if s > 1 or s < -1:
+                return False
 
-  def load_game_state_from_str(self, s):
-    entries = s.split(";")
-    
-    if len(entries) != 3:
-      return False
-    
-    if len(entries[0]) != 25 or not entries[0].isalpha() or not entries[0].islower():
-      return False
-    
-    self.game_str = entries[0]
+        if entries[2][-1] != "#":  # check sanity
+            return False
 
-    self.game_state = [int(item) for item in entries[1].split(",")]
+        self.history = [[int(it) for it in row.split(",")] for row in entries[2][:-1].split("|")]
 
-    if len(self.game_state) != 25:
-      return False
+        for row in self.history:
+            for it in row:
+                if it < 0 or it > 24:
+                    return False
 
-    for s in self.game_state:
-      if s > 1 or s < -1:
-        return False
+        if 0 in self.game_state:
+            self.genie.awake(self.game_str)
 
-    if entries[2][-1] != "#": # check sanity
-      return False
-
-    self.history = [[int(it) for it in row.split(",")] for row in entries[2][:-1].split("|")]
-
-    for row in self.history:
-      for it in row:
-        if it < 0 or it > 24:
-          return False
-
-    return True
-
-
-  def get_tile_state(self, y, x):
-    return self.game_state[5*y+x]
-
-
-  def get_letter(self, y, x):
-    return self.game_str[5*y+x]
-
-
-  def select_tile(self, y, x):
-    for s in self.selected_tiles:
-      if 5*y+x == s:
-        return False
-
-    self.selected_tiles.append(5*y+x)
-    return True
-
-
-  def undo_selection(self):
-    if self.selected_tiles:
-      self.selected_tiles.pop()
-      return True
-
-    return False
-
-
-  def is_selected_tile(self, y, x):
-    for s in self.selected_tiles:
-      if 5*y+x == s:
         return True
 
-    return False
+    def get_tile_state(self, y, x):
+        return self.game_state[5*y+x]
 
+    def get_letter(self, y, x):
+        return self.game_str[5*y+x]
 
-  def get_selected_letters(self):
-    return self.get_word(self.selected_tiles)
+    def select_tile(self, y, x):
+        for s in self.selected_tiles:
+            if 5*y+x == s:
+                return False
 
+        self.selected_tiles.append(5*y+x)
+        return True
 
-  def get_word(self, tiles):
-    word = ""
-    for t in tiles:
-      word += self.game_str[t]
+    def undo_selection(self):
+        if self.selected_tiles:
+            self.selected_tiles.pop()
+            return True
 
-    return word
-
-
-  def play_selected_word(self):
-    word = self.get_selected_letters()
-
-    for tiles in self.history:
-      if word == self.get_word(tiles):
         return False
 
-    self.history.append(self.selected_tiles)
+    def is_selected_tile(self, y, x):
+        for s in self.selected_tiles:
+            if 5*y+x == s:
+                return True
 
-    modified_tiles = []
-    for s in self.selected_tiles:
-      if not self.is_protected_tile(int(s/5), s%5):
-        modified_tiles.append(s)
+        return False
 
-    for s in modified_tiles:
-      if len(self.history) % 2 == 1:
-        self.game_state[s] = 1
-      else:
-        self.game_state[s] = -1
+    def get_selected_letters(self):
+        return self.get_word(self.selected_tiles)
 
-    self.selected_tiles = []
+    def get_word(self, tiles):
+        word = ""
+        for t in tiles:
+            word += self.game_str[t]
 
-    return True
+        return word
 
+    def play_selected_word(self):
+        word = self.get_selected_letters()
 
-  def get_played_words(self):
-    return [self.get_word(item) for item in self.history]
+        if not self.genie.verify(word):
+            return False
 
+        for tiles in self.history:
+            if word == self.get_word(tiles):
+                return False
 
-  def is_protected_tile(self, y, x):
-    tile_state = self.game_state[5*y+x]
+        self.history.append(self.selected_tiles)
 
-    if tile_state == 0:
-      return False
-    
-    if y - 1 >= 0 and self.game_state[5*y+x-5] != tile_state:
-      return False
-    
-    if y + 1 <= 4 and self.game_state[5*y+x+5] != tile_state:
-      return False
-    
-    if x - 1 >= 0 and self.game_state[5*y+x-1] != tile_state:
-      return False
-    
-    if x + 1 <= 4 and self.game_state[5*y+x+1] != tile_state:
-      return False
+        modified_tiles = []
+        for s in self.selected_tiles:
+            if not self.is_protected_tile(int(s/5), s%5):
+                modified_tiles.append(s)
 
-    return True
+        for s in modified_tiles:
+            if len(self.history) % 2 == 1:
+                self.game_state[s] = 1
+            else:
+                self.game_state[s] = -1
+
+        self.selected_tiles = []
+
+        return True
+
+    def get_played_words(self):
+        return [self.get_word(item) for item in self.history]
+
+    def is_protected_tile(self, y, x):
+        tile_state = self.game_state[5*y+x]
+
+        if tile_state == 0:
+            return False
+
+        if y - 1 >= 0 and self.game_state[5*y+x-5] != tile_state:
+            return False
+
+        if y + 1 <= 4 and self.game_state[5*y+x+5] != tile_state:
+            return False
+
+        if x - 1 >= 0 and self.game_state[5*y+x-1] != tile_state:
+            return False
+
+        if x + 1 <= 4 and self.game_state[5*y+x+1] != tile_state:
+            return False
+
+        return True
