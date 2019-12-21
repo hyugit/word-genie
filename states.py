@@ -49,7 +49,7 @@ class GameStates:
                 if it < 0 or it > 24:
                     return False
 
-        if 0 in self.game_state:
+        if not self.is_finished():
             self.genie.awake(self.game_str)
 
         return True
@@ -92,8 +92,22 @@ class GameStates:
 
         return word
 
+    def get_score(self):
+        blue = self.game_state.count(1)
+        red = self.game_state.count(-1)
+        return {"blue": blue, "red": red}
+
+    def is_finished(self):
+        if 0 in self.game_state:
+            return False
+
+        return True
+
     def play_selected_word(self):
         word = self.get_selected_letters()
+
+        if self.is_finished():
+            return False
 
         if not self.genie.verify(word):
             return False
@@ -128,16 +142,16 @@ class GameStates:
         if tile_state == 0:
             return False
 
-        if y - 1 >= 0 and self.game_state[5*y+x-5] != tile_state:
+        if 0 <= y - 1 <= 4 and self.game_state[5*y+x-5] != tile_state:
             return False
 
-        if y + 1 <= 4 and self.game_state[5*y+x+5] != tile_state:
+        if 0 <= y + 1 <= 4 and self.game_state[5*y+x+5] != tile_state:
             return False
 
-        if x - 1 >= 0 and self.game_state[5*y+x-1] != tile_state:
+        if 0 <= x - 1 <= 4 and self.game_state[5*y+x-1] != tile_state:
             return False
 
-        if x + 1 <= 4 and self.game_state[5*y+x+1] != tile_state:
+        if 0 <= x + 1 <= 4 and self.game_state[5*y+x+1] != tile_state:
             return False
 
         return True

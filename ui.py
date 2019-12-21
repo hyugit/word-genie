@@ -37,7 +37,7 @@ class GameUI:
         self.start_x = start_x
 
     def draw_frame(self, screen):
-        current_line = self.start_y + 2
+        current_line = self.start_y + 3
 
         screen.addstr(current_line, self.start_x, "┏━━━┳━━━┳━━━┳━━━┳━━━┓")
         current_line += 1
@@ -69,7 +69,7 @@ class GameUI:
         return color_id
 
     def draw_tile(self, screen, y, x):
-        center_y = self.start_y + 3 + y * 2
+        center_y = self.start_y + 4 + y * 2
         center_x = self.start_x + 2 + x * 4
         color_id = self.tile_color(y, x)
 
@@ -99,7 +99,7 @@ class GameUI:
         y = min(4, y)
 
         screen.move(
-            self.start_y + 3 + 2 * y,
+            self.start_y + 4 + 2 * y,
             self.start_x + 2 + 4 * x
         )
 
@@ -111,16 +111,37 @@ class GameUI:
         screen.addstr(self.start_y, self.start_x + 1, "Letterpress Console")
         screen.attroff(curses.A_BOLD)
 
+    def draw_score(self, screen):
+        score = self.game_state.get_score()
+        screen.addstr(
+            self.start_y + 1,
+            self.start_x,
+            "score: ")
+        screen.addstr(
+            self.start_y + 1,
+            self.start_x + 7,
+            str(score.get("blue")),
+            curses.color_pair(2))
+        screen.addstr(
+            self.start_y + 1,
+            self.start_x + 7 + len(str(score.get("blue"))),
+            " - ")
+        screen.addstr(
+            self.start_y + 1,
+            self.start_x + 10 + len(str(score.get("blue"))),
+            str(score.get("red")),
+            curses.color_pair(4))
+
     def draw_input(self, screen):
         input_str = self.game_state.get_selected_letters()
-        screen.addstr(self.start_y + 1, self.start_x, "play: ")
+        screen.addstr(self.start_y + 2, self.start_x, "play: ")
         screen.attron(curses.A_UNDERLINE)
-        screen.addstr(self.start_y + 1, self.start_x + 6, input_str)
+        screen.addstr(self.start_y + 2, self.start_x + 6, input_str)
         screen.attroff(curses.A_UNDERLINE)
 
     def draw_wordlist(self, screen):
         words = self.game_state.get_played_words()
-        current_line = 3 + self.start_y
+        current_line = 4 + self.start_y
         current_row = 23 + self.start_x
 
         screen.addstr(current_line, current_row, "Words Played:")
@@ -133,7 +154,7 @@ class GameUI:
             i += 1
 
     def draw_dir(self, screen):
-        current_line = 3 + self.start_y
+        current_line = 4 + self.start_y
         x = self.start_x + 50
 
         screen.addstr(current_line, x, "┃ Saved Games:")
@@ -189,6 +210,7 @@ class GameUI:
                 # Rendering the board
                 self.draw_title(screen)
                 self.draw_frame(screen)
+                self.draw_score(screen)
                 self.draw_input(screen)
                 self.draw_wordlist(screen)
                 self.draw_dir(screen)
