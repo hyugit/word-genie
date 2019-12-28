@@ -1,30 +1,8 @@
-import os
 import curses
 import datetime
-import fnmatch
 from genie import Genie
 from states import GameStates
-
-
-def save_game_to_file(s, filename):
-    with open(filename, 'w') as fn:
-        fn.write("{}\n".format(s))
-
-
-def load_game_from_file(filename):
-    with open(filename, 'r') as fn:
-        line = fn.readline()
-        line = line.strip()
-        return line
-
-
-def get_game_files():
-    filenames = []
-    for f in os.listdir("."):
-        if fnmatch.fnmatch(f, "Game_*"):
-            filenames.append(f)
-
-    return filenames[:9]
+import utils
 
 
 class GameUI:
@@ -161,18 +139,18 @@ class GameUI:
         current_line += 1
 
         i = 1
-        for fn in get_game_files():
+        for fn in utils.get_local_files("Game_*"):
             screen.addstr(current_line, x, "┃ {}. {}".format(i, fn))
             current_line += 1
             i += 1
 
     def save_game(self):
         filename = "Game_" + "_".join(datetime.datetime.now().strftime("%c").split(" "))
-        save_game_to_file(self.game_state.to_str(), filename=filename)
+        utils.write_str_to_file(self.game_state.to_str(), filename=filename)
 
     def load_game(self, key):
-        filenames = get_game_files()
-        result = load_game_from_file(filename=filenames[key - ord('1')])
+        filenames = utils.get_local_files("Game_*")
+        result = utils.read_str_from_file(filename=filenames[key - ord('1')])
         self.game_state.from_str(result)
 
     def generate_draw_func(self):
