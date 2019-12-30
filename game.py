@@ -6,6 +6,7 @@ import curses
 
 
 class Game:
+
     def __init__(self):
         game_str = [random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(25)]
         game_str = "".join(game_str)

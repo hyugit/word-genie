@@ -5,15 +5,15 @@ DEFAULT_DICTIONARY = "dictionary"
 class Genie:
 
     def __init__(self):
-        self._dictionary = {}
+        self.dictionary = {}
 
     def awake(self, game):
         if not game.isalpha() or not game.islower() or len(game) != 25:
             print("Invalid game string, going back to sleep...")
             return
 
-        self._reload()
-        result = self._trim(game)
+        self.reload()
+        result = self.trim(game)
 
         print("Woke! {} words available!".format(result))
         return result
@@ -23,8 +23,10 @@ class Genie:
             print("Invalid query...")
             return
 
-        result = self._find(letters)
+        result = self.find(letters)
         return result
+
+    # TODO: def recommend(self, letters, game_state):
 
     def verify(self, word):
         if not word.isalpha() or not word.islower():
@@ -32,15 +34,15 @@ class Genie:
             return False
 
         key = "".join(sorted(word))
-        if not self._dictionary.get(key):
+        if not self.dictionary.get(key):
             return False
 
-        if word in self._dictionary.get(key):
+        if word in self.dictionary.get(key):
             return True
 
         return False
 
-    def _reload(self):
+    def reload(self):
         print("Reading word list...")
 
         with open(DEFAULT_WORDLIST) as wl:
@@ -51,36 +53,36 @@ class Genie:
                 word = line.strip()
                 index = "".join(sorted(word))
 
-                if index in self._dictionary:
-                    self._dictionary[index].append(word)
+                if index in self.dictionary:
+                    self.dictionary[index].append(word)
 
                 else:
-                    self._dictionary[index] = [word]
+                    self.dictionary[index] = [word]
 
-    def _trim(self, game):
+    def trim(self, game):
         letters = "".join(sorted(game))
         available_words = 0
 
-        for key in list(self._dictionary):
+        for key in list(self.dictionary):
             tmp_letter = letters
 
             for k in key:
                 if tmp_letter.find(k) < 0:
-                    self._dictionary.pop(key, None)
+                    self.dictionary.pop(key, None)
 
                 else:
                     tmp_letter = tmp_letter.replace(k, "", 1)
 
-            if self._dictionary.get(key):
-                available_words += len(self._dictionary.get(key))
+            if self.dictionary.get(key):
+                available_words += len(self.dictionary.get(key))
 
         return available_words
 
-    def _find(self, word):
+    def find(self, word):
         letters = sorted(word)
         result = []
 
-        for key in sorted(list(self._dictionary), key = len, reverse = True):
+        for key in sorted(list(self.dictionary), key=len, reverse=True):
             tmp_key = key
             found = True
 
@@ -92,7 +94,7 @@ class Genie:
                 tmp_key = tmp_key.replace(letter, "", 1)
 
             if found:
-                result.extend(self._dictionary.get(key) or [])
+                result.extend(self.dictionary.get(key) or [])
 
         return result
 
@@ -100,8 +102,8 @@ class Genie:
         print("Writing dictionary...")
 
         with open(DEFAULT_DICTIONARY, 'w') as df:
-            for k in sorted(list(self._dictionary), key=len, reverse=True):
-                words = ",".join(self._dictionary.get(k) or [])
+            for k in sorted(list(self.dictionary), key=len, reverse=True):
+                words = ",".join(self.dictionary.get(k) or [])
                 df.write("%s:%s\n" % (k, words))
 
 

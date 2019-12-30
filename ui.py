@@ -163,9 +163,9 @@ class GameUI:
 
             # Start colors in curses
             curses.start_color()
-            curses.init_pair(1, 12, curses.COLOR_BLACK) # bright blue
+            curses.init_pair(1, 12, curses.COLOR_BLACK)  # bright blue
             curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_BLACK)
-            curses.init_pair(3, 9, curses.COLOR_BLACK) # bright red
+            curses.init_pair(3, 9, curses.COLOR_BLACK)  # bright red
             curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
 
             # Loop where k is the last character pressed
@@ -209,13 +209,13 @@ class GameUI:
         return draw_func
 
 
-def ui():
+def start_game():
     genie = Genie()
     states = GameStates(genie=genie)
-    ui = GameUI(state=states, start_y=1, start_x=2)
-    draw_func = ui.generate_draw_func()
+    ux = GameUI(state=states, start_y=1, start_x=2)
+    draw_func = ux.generate_draw_func()
     curses.wrapper(draw_func)
 
 
 if __name__ == "__main__":
-    ui()
+    start_game()

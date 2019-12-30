@@ -1,11 +1,20 @@
 class GameStates:
 
-    def __init__(self, genie, game_str="a"*25, game_state=[0]*25, history=[]):
+    def __init__(self, genie, game_str="a"*25, game_state=None, history=None):
         self.game_str = game_str
+
+        if game_state is None:
+            game_state = [0] * 25
         self.game_state = game_state
+
+        if history is None:
+            history = []
         self.history = history
+
         self.selected_tiles = []
         self.genie = genie
+
+    # TODO: init from a game state with newly allocated attrs
 
     def to_str(self):
         entry = self.game_str
@@ -68,6 +77,8 @@ class GameStates:
         self.selected_tiles.append(5*y+x)
         return True
 
+    # TODO: def select_tiles(self, indices: [int]):
+
     def undo_selection(self):
         if self.selected_tiles:
             self.selected_tiles.pop()
@@ -120,7 +131,7 @@ class GameStates:
 
         modified_tiles = []
         for s in self.selected_tiles:
-            if not self.is_protected_tile(int(s/5), s%5):
+            if not self.is_protected_tile(int(s/5), s % 5):
                 modified_tiles.append(s)
 
         for s in modified_tiles:
