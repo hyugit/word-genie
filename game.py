@@ -13,6 +13,7 @@ class Game:
         self.genie = Genie()
         self.state = GameStates(genie=self.genie, game_str=game_str)
         self.game_str = game_str
+        self.genie.awake(game_str)
         self.ui = GameUI(state=self.state, start_y=1, start_x=2)
 
     def run(self):

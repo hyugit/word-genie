@@ -1,3 +1,6 @@
+import copy
+
+
 class GameStates:
 
     def __init__(self, genie, game_str="a"*25, game_state=None, history=None):
@@ -14,7 +17,17 @@ class GameStates:
         self.selected_tiles = []
         self.genie = genie
 
-    # TODO: init from a game state with newly allocated attrs
+    def __deepcopy__(self, memo=None):
+        gs = GameStates(
+            genie=self.genie,
+            game_str=copy.deepcopy(self.game_str),
+            game_state=copy.deepcopy(self.game_state),
+            history=copy.deepcopy(self.history)
+        )
+
+        gs.selected_tiles = []
+
+        return gs
 
     def to_str(self):
         entry = self.game_str
@@ -77,7 +90,61 @@ class GameStates:
         self.selected_tiles.append(5*y+x)
         return True
 
-    # TODO: def select_tiles(self, indices: [int]):
+    def select_tiles(self, indices: [int]):
+        for i in indices:
+            if 0 <= i <= 24:
+                self.selected_tiles.append(i)
+            else:
+                return False
+
+        return True
+
+    def get_playable_options_from_letters(self, letters, hint=None):
+        if len(letters) is 0:
+            return []
+
+        if hint is None:
+            hint = []
+
+        # TODO: import & use numpy and setup virtual env
+
+        # initialize indices matrix
+        idx_mat = [[i for i, x in enumerate(self.game_str) if x is l] for l in letters]
+
+        # prune indices matrix using hint
+        for h in hint:
+            for i, idx_col in enumerate(idx_mat):
+                if h in idx_col:
+                    idx_mat[i] = [h]
+                    for col in idx_mat[i+1:]:
+                        if h in col:
+                            col.remove(h)
+
+        # calc dimensions and least common multiple
+        dims = [len(idx) for idx in idx_mat]
+        lcm = 1
+        for d in dims:
+            lcm *= d
+
+        # initialize the options matrix
+        opt_mat = [[]]*lcm
+        for i in range(len(opt_mat)):
+            opt_mat[i] = copy.copy([0]*len(letters))
+
+        # fill in each element
+        step = 1
+        for i, d in enumerate(dims):
+            for j in range(lcm):
+                opt_mat[(j*step) % lcm + (j*step) // lcm][i] = idx_mat[i][j % d]
+            step *= d
+
+        return opt_mat
+
+    def get_recommendation(self):
+        if len(self.selected_tiles) > 0:
+            return self.genie.recommend(self.selected_tiles, self)
+
+        return []
 
     def undo_selection(self):
         if self.selected_tiles:
@@ -107,6 +174,8 @@ class GameStates:
         blue = self.game_state.count(1)
         red = self.game_state.count(-1)
         return {"blue": blue, "red": red}
+
+    # TODO: get protected tiles for both players
 
     def is_finished(self):
         if 0 in self.game_state:

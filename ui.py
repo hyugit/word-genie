@@ -13,6 +13,7 @@ class GameUI:
         self.game_state = state
         self.start_y = start_y
         self.start_x = start_x
+        self.show_recommendation = False
 
     def draw_frame(self, screen):
         current_line = self.start_y + 3
@@ -132,7 +133,7 @@ class GameUI:
             i += 1
 
     def draw_dir(self, screen):
-        current_line = 4 + self.start_y
+        current_line = 6 + self.start_y
         x = self.start_x + 50
 
         screen.addstr(current_line, x, "┃ Saved Games:")
@@ -143,6 +144,16 @@ class GameUI:
             screen.addstr(current_line, x, "┃ {}. {}".format(i, fn))
             current_line += 1
             i += 1
+
+    def draw_recommendation(self, screen):
+        if self.show_recommendation is False:
+            return
+
+        current_line = 4 + self.start_y
+        x = self.start_x + 50
+
+        screen.addstr(current_line, x, "┃ Best Move: {}".format(self.game_state.get_recommendation()))
+        screen.addstr(current_line + 1, x, "┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
     def save_game(self):
         filename = "Game_" + "_".join(datetime.datetime.now().strftime("%c").split(" "))
@@ -171,6 +182,8 @@ class GameUI:
             # Loop where k is the last character pressed
             while k != ord('q'):
 
+                self.show_recommendation = False
+
                 if k == ord('a'):
                     self.game_state.select_tile(self.cursor_y, self.cursor_x)
                 elif k == ord('u'):
@@ -179,6 +192,8 @@ class GameUI:
                     self.game_state.play_selected_word()
                 elif k == ord('s'):
                     self.save_game()
+                elif k == ord('r'):
+                    self.show_recommendation = True
                 elif ord('1') <= k <= ord('9'):
                     self.load_game(k)
 
@@ -192,6 +207,7 @@ class GameUI:
                 self.draw_input(screen)
                 self.draw_wordlist(screen)
                 self.draw_dir(screen)
+                self.draw_recommendation(screen)
 
                 for i in range(5):
                     for j in range(5):
