@@ -40,30 +40,36 @@ class Genie:
         working_states.select_tiles(indices)
         letters = working_states.get_selected_letters()
         played_words = set(working_states.get_played_words())
+        current_player = working_states.get_current_player()
+
+        # setup decision making criteria
         working_scores = working_states.get_score()
-        current_player = "blue"
+        working_defences = working_states.get_protected_tiles()
+        working_efficiency = working_states.get_efficiency()
 
-        # if *blue* just played, then we are playing as *red*
-        if len(played_words) % 2 == 1:
-            current_player = "red"
-
+        # calculate baselines
         best_score = working_scores[current_player]  # baseline
+        best_defence = working_defences[current_player]  # baseline for protected tiles
+        best_efficiency = 0  # baseline for efficiency
         best_opt = None
 
         # get full matches
         full_matches = set(self.ask(letters))
         matches = full_matches.difference(played_words)
 
-        # get partial matches
+        # get partial matches. When there is no match,
+        # instead of enumerating all the possibilities,
+        # we should drop one letter from the end of the line,
+        # because this approach implies an order to the letters
+        # that the neural networks can learn and rely on
         if len(matches) is 0:
-            partial_letters = ["".join([i for i in letters if i is not j]) for j in letters]
+            # get the partial letters, but only a few within reasonable range
+            partial_letters = [letters[0:-i-1] for i in range(min(3, len(letters) - 3))]
             for partial in partial_letters:
                 partial_matches = set(self.ask(partial))
-                matches.union(partial_matches)
+                matches = matches.union(partial_matches)
 
-        # get top 20 best play by score
         matches = sorted(list(matches), key=len, reverse=True)
-        matches = matches[0:10]
 
         for m in matches:
             plays = working_states.get_playable_options_from_letters(m, hint=indices)
@@ -71,12 +77,30 @@ class Genie:
                 tmp_states = copy.deepcopy(working_states)
                 tmp_states.select_tiles(play)
                 tmp_states.play_selected_word()
+
+                # get statistics
                 scores = tmp_states.get_score()
                 score = scores[current_player]
+                defences = tmp_states.get_protected_tiles()
+                defence = defences[current_player]
+                efficiencies = tmp_states.get_efficiency()
+                efficiency = efficiencies[current_player]
 
-                if score > best_score:
+                # decision making
+                # Option 1:
+                # if efficiency >= best_efficiency and score >= best_score and defence >= best_defence:
+                #
+                # Option 2:
+                # if score >= best_score and defence > best_defence:
+                #
+                # Option 3:
+                # if defence > best_defence or \
+                #         (defence == best_defence and score > best_score):
+                if score > best_score and defence >= best_defence:
                     best_opt = play
                     best_score = score
+                    best_defence = defence
+                    best_efficiency = efficiency
 
         return best_opt
 

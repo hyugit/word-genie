@@ -64,12 +64,17 @@ class GameStates:
         if entries[2][-1] != "#":  # check sanity
             return False
 
-        self.history = [[int(it) for it in row.split(",")] for row in entries[2][:-1].split("|")]
+        self.history = []
 
-        for row in self.history:
-            for it in row:
-                if it < 0 or it > 24:
-                    return False
+        if entries[2] != "#":
+            self.history = [[int(it) for it in row.split(",")] for row in entries[2][:-1].split("|")]
+
+            for row in self.history:
+                for it in row:
+                    if it < 0 or it > 24:
+                        return False
+
+        self.selected_tiles = []
 
         if not self.is_finished():
             self.genie.awake(self.game_str)
@@ -131,12 +136,15 @@ class GameStates:
         for i in range(len(opt_mat)):
             opt_mat[i] = copy.copy([0]*len(letters))
 
-        # fill in each element
+        # populate the options matrix
         step = 1
         for i, d in enumerate(dims):
             for j in range(lcm):
                 opt_mat[(j*step) % lcm + (j*step) // lcm][i] = idx_mat[i][j % d]
             step *= d
+
+        # remove columns that contain duplicates
+        opt_mat = [opt for opt in opt_mat if len(set(opt)) is len(letters)]
 
         return opt_mat
 
@@ -175,7 +183,29 @@ class GameStates:
         red = self.game_state.count(-1)
         return {"blue": blue, "red": red}
 
-    # TODO: get protected tiles for both players
+    def get_protected_tiles(self):
+        blue = 0
+        red = 0
+        for i, s in enumerate(self.game_state):
+            if s == 1 and self.is_protected_tile(0, 0, idx=i):
+                blue += 1
+            if s == -1 and self.is_protected_tile(0, 0, idx=i):
+                red += 1
+
+        return {"blue": blue, "red": red}
+
+    def get_efficiency(self):
+        ptiles = self.get_protected_tiles()
+        scores = self.get_score()
+
+        efficiencies = {}
+        for player in ["blue", "red"]:
+            if scores[player] is 0:
+                efficiencies[player] = 0
+            else:
+                efficiencies[player] = ptiles[player] / scores[player]
+
+        return efficiencies
 
     def is_finished(self):
         if 0 in self.game_state:
@@ -200,7 +230,7 @@ class GameStates:
 
         modified_tiles = []
         for s in self.selected_tiles:
-            if not self.is_protected_tile(int(s/5), s % 5):
+            if not self.is_protected_tile(s // 5, s % 5):
                 modified_tiles.append(s)
 
         for s in modified_tiles:
@@ -216,22 +246,34 @@ class GameStates:
     def get_played_words(self):
         return [self.get_word(item) for item in self.history]
 
-    def is_protected_tile(self, y, x):
-        tile_state = self.game_state[5*y+x]
+    def get_current_player(self):
+        if len(self.history) % 2 == 1:
+            return "red"
+
+        return "blue"
+
+    def is_protected_tile(self, y, x, idx=None):
+        if idx is None:
+            idx = 5 * y + x
+        else:
+            y = idx // 5
+            x = idx % 5
+
+        tile_state = self.game_state[idx]
 
         if tile_state == 0:
             return False
 
-        if 0 <= y - 1 <= 4 and self.game_state[5*y+x-5] != tile_state:
+        if 0 <= y - 1 <= 4 and self.game_state[idx-5] != tile_state:
             return False
 
-        if 0 <= y + 1 <= 4 and self.game_state[5*y+x+5] != tile_state:
+        if 0 <= y + 1 <= 4 and self.game_state[idx+5] != tile_state:
             return False
 
-        if 0 <= x - 1 <= 4 and self.game_state[5*y+x-1] != tile_state:
+        if 0 <= x - 1 <= 4 and self.game_state[idx-1] != tile_state:
             return False
 
-        if 0 <= x + 1 <= 4 and self.game_state[5*y+x+1] != tile_state:
+        if 0 <= x + 1 <= 4 and self.game_state[idx+1] != tile_state:
             return False
 
         return True
