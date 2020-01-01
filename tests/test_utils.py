@@ -13,11 +13,11 @@ class TestStringMethods(unittest.TestCase):
             fn.write("")
 
     def test_get_local_files(self):
-        self.assertEqual(len(utils.get_local_files("*.py")), 1)  # we are in tests/ directory
-        self.assertEqual(len(utils.get_local_files("text.txt")), 1)
+        self.assertEqual(len(utils.get_files("*.py", ".")), 1)  # we are in tests/ directory
+        self.assertEqual(len(utils.get_files("text.txt", ".")), 1)
 
     def test_write_str(self):
-        utils.write_str_to_file("test", "text.txt")
+        utils.write_str_to_file("test", "text.txt", ".")
         with open("text.txt", "r") as fn:
             line = fn.readline()
             s = line.strip()
@@ -26,7 +26,7 @@ class TestStringMethods(unittest.TestCase):
     def test_read_str(self):
         with open("text.txt", "w") as fn:
             fn.write("test")
-        s = utils.read_str_from_file("text.txt")
+        s = utils.read_str_from_file("text.txt", ".")
         self.assertEqual(s, "test")
 
 

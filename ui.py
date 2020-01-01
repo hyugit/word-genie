@@ -14,6 +14,7 @@ class GameUI:
         self.start_y = start_y
         self.start_x = start_x
         self.show_recommendation = False
+        self.page_number = 0
 
     def draw_frame(self, screen):
         current_line = self.start_y + 3
@@ -136,14 +137,14 @@ class GameUI:
         current_line = 6 + self.start_y
         x = self.start_x + 50
 
-        screen.addstr(current_line, x, "┃ Saved Games:")
+        screen.addstr(current_line, x, "┃ Saved Games: p.{}".format(self.page_number))
         current_line += 1
 
-        i = 1
-        for fn in utils.get_local_files("Game_*"):
+        filenames = utils.get_files("Game_*")
+
+        for i, fn in enumerate(filenames[self.page_number*10:self.page_number*10+9]):
             screen.addstr(current_line, x, "┃ {}. {}".format(i, fn))
             current_line += 1
-            i += 1
 
     def draw_recommendation(self, screen):
         if self.show_recommendation is False:
@@ -160,8 +161,8 @@ class GameUI:
         utils.write_str_to_file(self.game_state.to_str(), filename=filename)
 
     def load_game(self, key):
-        filenames = utils.get_local_files("Game_*")
-        result = utils.read_str_from_file(filename=filenames[key - ord('1')])
+        filenames = utils.get_files("Game_*")
+        result = utils.read_str_from_file(filename=filenames[key - ord('0')])
         self.game_state.from_str(result)
 
     def generate_draw_func(self):
@@ -194,7 +195,12 @@ class GameUI:
                     self.save_game()
                 elif k == ord('r'):
                     self.show_recommendation = True
-                elif ord('1') <= k <= ord('9'):
+                elif k == ord('['):
+                    if self.page_number > 0:
+                        self.page_number -= 1
+                elif k == ord(']'):
+                    self.page_number += 1
+                elif ord('0') <= k <= ord('9'):
                     self.load_game(k)
 
                 # Initialization
