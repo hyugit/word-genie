@@ -6,7 +6,7 @@ import utils
 
 class Arena:
 
-    def __init__(self, state: State, start_y=0, start_x=0):
+    def __init__(self, state: State, start_y=0, start_x=0, mode=None, player=None):
         self.cursor_y = 0
         self.cursor_x = 0
         self.state = state
@@ -14,6 +14,8 @@ class Arena:
         self.start_x = start_x
         self.show_recommendation = False
         self.page_number = 0
+        self.game_mode = mode
+        self.player = player
 
     def draw_frame(self, screen):
         current_line = self.start_y + 3
@@ -206,6 +208,15 @@ class Arena:
 
                 # Initialization
                 screen.clear()
+
+                # players play the game
+                if self.game_mode == "mvh":
+                    self.player.play("blue")
+                elif self.game_mode == "hvm":
+                    self.player.play("red")
+                elif self.game_mode == "mvm":
+                    self.player.play("blue")
+                    self.player.play("red")
 
                 # Rendering the board
                 self.draw_title(screen)
