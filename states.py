@@ -14,6 +14,9 @@ class GameStates:
             history = []
         self.history = history
 
+        # for replay purpose, not in use otherwise
+        self.backup_history = None
+
         self.selected_tiles = []
         self.genie = genie
 
@@ -65,6 +68,7 @@ class GameStates:
             return False
 
         self.history = []
+        self.backup_history = []
 
         if entries[2] != "#":
             self.history = [[int(it) for it in row.split(",")] for row in entries[2][:-1].split("|")]
@@ -277,3 +281,18 @@ class GameStates:
             return False
 
         return True
+
+    def replay(self):
+        if self.is_finished():
+            self.backup_history = self.history
+            self.history = []
+            self.game_state = [0] * 25
+            self.genie.awake(self.game_str)
+        else:
+            if not self.backup_history:
+                print("Game is not finished!")
+                return
+            else:  # replay each word
+                word = self.backup_history.pop(0)
+                self.select_tiles(word)
+                self.play_selected_word()

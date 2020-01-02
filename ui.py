@@ -200,6 +200,8 @@ class GameUI:
                         self.page_number -= 1
                 elif k == ord(']'):
                     self.page_number += 1
+                elif k == ord(';'):
+                    self.game_state.replay()
                 elif ord('0') <= k <= ord('9'):
                     self.load_game(k)
 
