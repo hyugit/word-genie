@@ -1,14 +1,14 @@
 import copy
 
 
-class GameStates:
+class State:
 
-    def __init__(self, genie, game_str="a"*25, game_state=None, history=None):
+    def __init__(self, genie, game_str="a"*25, state=None, history=None):
         self.game_str = game_str
 
-        if game_state is None:
-            game_state = [0] * 25
-        self.game_state = game_state
+        if state is None:
+            state = [0] * 25
+        self.state = state
 
         if history is None:
             history = []
@@ -21,10 +21,10 @@ class GameStates:
         self.genie = genie
 
     def __deepcopy__(self, memo=None):
-        gs = GameStates(
+        gs = State(
             genie=self.genie,
             game_str=copy.deepcopy(self.game_str),
-            game_state=copy.deepcopy(self.game_state),
+            state=copy.deepcopy(self.state),
             history=copy.deepcopy(self.history)
         )
 
@@ -36,7 +36,7 @@ class GameStates:
         entry = self.game_str
         entry += ";"
 
-        entry += ",".join([str(s) for s in self.game_state])
+        entry += ",".join([str(s) for s in self.state])
         entry += ";"
 
         items = [",".join([str(it) for it in item]) for item in self.history]
@@ -55,12 +55,12 @@ class GameStates:
             return False
 
         self.game_str = entries[0]
-        self.game_state = [int(item) for item in entries[1].split(",")]
+        self.state = [int(item) for item in entries[1].split(",")]
 
-        if len(self.game_state) != 25:
+        if len(self.state) != 25:
             return False
 
-        for s in self.game_state:
+        for s in self.state:
             if s > 1 or s < -1:
                 return False
 
@@ -86,7 +86,7 @@ class GameStates:
         return True
 
     def get_tile_state(self, y, x):
-        return self.game_state[5*y+x]
+        return self.state[5*y+x]
 
     def get_letter(self, y, x):
         return self.game_str[5*y+x]
@@ -183,14 +183,14 @@ class GameStates:
         return word
 
     def get_score(self):
-        blue = self.game_state.count(1)
-        red = self.game_state.count(-1)
+        blue = self.state.count(1)
+        red = self.state.count(-1)
         return {"blue": blue, "red": red}
 
     def get_protected_tiles(self):
         blue = 0
         red = 0
-        for i, s in enumerate(self.game_state):
+        for i, s in enumerate(self.state):
             if s == 1 and self.is_protected_tile(0, 0, idx=i):
                 blue += 1
             if s == -1 and self.is_protected_tile(0, 0, idx=i):
@@ -212,7 +212,7 @@ class GameStates:
         return efficiencies
 
     def is_finished(self):
-        if 0 in self.game_state:
+        if 0 in self.state:
             return False
 
         return True
@@ -239,9 +239,9 @@ class GameStates:
 
         for s in modified_tiles:
             if len(self.history) % 2 == 1:
-                self.game_state[s] = 1
+                self.state[s] = 1
             else:
-                self.game_state[s] = -1
+                self.state[s] = -1
 
         self.selected_tiles = []
 
@@ -263,21 +263,21 @@ class GameStates:
             y = idx // 5
             x = idx % 5
 
-        tile_state = self.game_state[idx]
+        tile_state = self.state[idx]
 
         if tile_state == 0:
             return False
 
-        if 0 <= y - 1 <= 4 and self.game_state[idx-5] != tile_state:
+        if 0 <= y - 1 <= 4 and self.state[idx-5] != tile_state:
             return False
 
-        if 0 <= y + 1 <= 4 and self.game_state[idx+5] != tile_state:
+        if 0 <= y + 1 <= 4 and self.state[idx+5] != tile_state:
             return False
 
-        if 0 <= x - 1 <= 4 and self.game_state[idx-1] != tile_state:
+        if 0 <= x - 1 <= 4 and self.state[idx-1] != tile_state:
             return False
 
-        if 0 <= x + 1 <= 4 and self.game_state[idx+1] != tile_state:
+        if 0 <= x + 1 <= 4 and self.state[idx+1] != tile_state:
             return False
 
         return True
@@ -286,7 +286,7 @@ class GameStates:
         if self.is_finished():
             self.backup_history = self.history
             self.history = []
-            self.game_state = [0] * 25
+            self.state = [0] * 25
             self.genie.awake(self.game_str)
         else:
             if not self.backup_history:

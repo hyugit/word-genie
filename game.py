@@ -1,8 +1,8 @@
-from states import GameStates
-from genie import Genie
-from ui import GameUI
 import random
 import curses
+from state import State
+from genie import Genie
+from arena import Arena
 
 
 class Game:
@@ -11,14 +11,14 @@ class Game:
         game_str = [random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(25)]
         game_str = "".join(game_str)
         self.genie = Genie()
-        self.state = GameStates(genie=self.genie, game_str=game_str)
+        self.state = State(genie=self.genie, game_str=game_str)
         self.game_str = game_str
         self.genie.awake(game_str)
-        self.ui = GameUI(state=self.state, start_y=1, start_x=2)
+        self.arena = Arena(state=self.state, start_y=1, start_x=2)
 
     def run(self):
-        draw_ui = self.ui.generate_draw_func()
-        curses.wrapper(draw_ui)
+        draw_arena = self.arena.generate_draw_func()
+        curses.wrapper(draw_arena)
 
 
 def main():

@@ -1,16 +1,15 @@
 import curses
 import datetime
-from genie import Genie
-from states import GameStates
+from state import State
 import utils
 
 
-class GameUI:
+class Arena:
 
-    def __init__(self, state, start_y=0, start_x=0):
+    def __init__(self, state: State, start_y=0, start_x=0):
         self.cursor_y = 0
         self.cursor_x = 0
-        self.game_state = state
+        self.state = state
         self.start_y = start_y
         self.start_x = start_x
         self.show_recommendation = False
@@ -36,14 +35,14 @@ class GameUI:
 
     def tile_color(self, cursor_y, cursor_x):
         color_id = 0
-        tile_state = self.game_state.get_tile_state(cursor_y, cursor_x)
+        tile_state = self.state.get_tile_state(cursor_y, cursor_x)
 
         if tile_state == 1:
             color_id = 1
         elif tile_state == -1:
             color_id = 3
 
-        if color_id != 0 and self.game_state.is_protected_tile(cursor_y, cursor_x):
+        if color_id != 0 and self.state.is_protected_tile(cursor_y, cursor_x):
             color_id += 1
 
         return color_id
@@ -56,7 +55,7 @@ class GameUI:
         screen.attron(curses.color_pair(color_id))
         screen.addstr(center_y, center_x + 1, ' ')
         screen.addstr(center_y, center_x - 1, ' ')
-        screen.addstr(center_y, center_x, self.game_state.get_letter(y, x))
+        screen.addstr(center_y, center_x, self.state.get_letter(y, x))
         screen.attroff(curses.color_pair(color_id))
 
     def move_cursor(self, screen, key):
@@ -92,7 +91,7 @@ class GameUI:
         screen.attroff(curses.A_BOLD)
 
     def draw_score(self, screen):
-        score = self.game_state.get_score()
+        score = self.state.get_score()
         screen.addstr(
             self.start_y + 1,
             self.start_x,
@@ -113,14 +112,14 @@ class GameUI:
             curses.color_pair(4))
 
     def draw_input(self, screen):
-        input_str = self.game_state.get_selected_letters()
+        input_str = self.state.get_selected_letters()
         screen.addstr(self.start_y + 2, self.start_x, "play: ")
         screen.attron(curses.A_UNDERLINE)
         screen.addstr(self.start_y + 2, self.start_x + 6, input_str)
         screen.attroff(curses.A_UNDERLINE)
 
     def draw_wordlist(self, screen):
-        words = self.game_state.get_played_words()
+        words = self.state.get_played_words()
         current_line = 4 + self.start_y
         current_row = 23 + self.start_x
 
@@ -153,17 +152,17 @@ class GameUI:
         current_line = 4 + self.start_y
         x = self.start_x + 50
 
-        screen.addstr(current_line, x, "┃ Best Move: {}".format(self.game_state.get_recommendation()))
+        screen.addstr(current_line, x, "┃ Best Move: {}".format(self.state.get_recommendation()))
         screen.addstr(current_line + 1, x, "┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
     def save_game(self):
         filename = "Game_" + "_".join(datetime.datetime.now().strftime("%c").split(" "))
-        utils.write_str_to_file(self.game_state.to_str(), filename=filename)
+        utils.write_str_to_file(self.state.to_str(), filename=filename)
 
     def load_game(self, key):
         filenames = utils.get_files("Game_*")
-        result = utils.read_str_from_file(filename=filenames[key - ord('0')])
-        self.game_state.from_str(result)
+        result = utils.read_str_from_file(filename=filenames[self.page_number * 10 + key - ord('0')])
+        self.state.from_str(result)
 
     def generate_draw_func(self):
         def draw_func(screen):
@@ -186,11 +185,11 @@ class GameUI:
                 self.show_recommendation = False
 
                 if k == ord('a'):
-                    self.game_state.select_tile(self.cursor_y, self.cursor_x)
+                    self.state.select_tile(self.cursor_y, self.cursor_x)
                 elif k == ord('u'):
-                    self.game_state.undo_selection()
+                    self.state.undo_selection()
                 elif k == ord('x'):
-                    self.game_state.play_selected_word()
+                    self.state.play_selected_word()
                 elif k == ord('s'):
                     self.save_game()
                 elif k == ord('r'):
@@ -201,7 +200,7 @@ class GameUI:
                 elif k == ord(']'):
                     self.page_number += 1
                 elif k == ord(';'):
-                    self.game_state.replay()
+                    self.state.replay()
                 elif ord('0') <= k <= ord('9'):
                     self.load_game(k)
 
@@ -219,25 +218,24 @@ class GameUI:
 
                 for i in range(5):
                     for j in range(5):
-                        if not self.game_state.is_selected_tile(i, j):
+                        if not self.state.is_selected_tile(i, j):
                             self.draw_tile(screen, i, j)
 
                 self.move_cursor(screen, k)
 
-                # Refresh the screen
+                # refresh the screen
                 screen.refresh()
 
-                # Wait for next input
+                # wait for next input
                 k = screen.getch()
 
         return draw_func
 
 
 def start_game():
-    genie = Genie()
-    states = GameStates(genie=genie)
-    ux = GameUI(state=states, start_y=1, start_x=2)
-    draw_func = ux.generate_draw_func()
+    state = State(genie=None)
+    arena = Arena(state=state, start_y=1, start_x=2)
+    draw_func = arena.generate_draw_func()
     curses.wrapper(draw_func)
 
 

@@ -1,5 +1,5 @@
 import copy
-from states import GameStates
+from state import State
 
 
 DEFAULT_WORDLIST = "wordlist"
@@ -14,12 +14,12 @@ class Genie:
 
     def awake(self, game):
         if game == self.game_str:
-            print("Already on the same game...")
-            return
+            # print("Already on the same game...")
+            return False
 
         if not game.isalpha() or not game.islower() or len(game) != 25:
-            print("Invalid game string, going back to sleep...")
-            return
+            # print("Invalid game string, going back to sleep...")
+            return False
 
         self.reload()
         result = self.trim(game)
@@ -35,8 +35,8 @@ class Genie:
         result = self.find(letters)
         return result
 
-    def recommend(self, indices, game_state: GameStates):
-        working_states = copy.deepcopy(game_state)
+    def recommend(self, indices, state: State):
+        working_states = copy.deepcopy(state)
         working_states.select_tiles(indices)
         letters = working_states.get_selected_letters()
         played_words = set(working_states.get_played_words())
