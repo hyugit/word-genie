@@ -5,14 +5,8 @@ class State:
 
     def __init__(self, genie, game_str="a"*25, state=None, history=None):
         self.game_str = game_str
-
-        if state is None:
-            state = [0] * 25
-        self.state = state
-
-        if history is None:
-            history = []
-        self.history = history
+        self.state = state or [0]*25
+        self.history = history or []
 
         # for replay purpose, not in use otherwise
         self.backup_history = None
@@ -259,7 +253,7 @@ class State:
     def is_protected_tile(self, y, x, idx=None):
         if idx is None:
             idx = 5 * y + x
-        else:
+        else:  # idx param overrides the first two arguments
             y = idx // 5
             x = idx % 5
 

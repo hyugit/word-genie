@@ -143,7 +143,7 @@ class Arena:
 
         filenames = utils.get_files("Game_*")
 
-        for i, fn in enumerate(filenames[self.page_number*10:self.page_number*10+9]):
+        for i, fn in enumerate(filenames[self.page_number*10:self.page_number*10+10]):
             screen.addstr(current_line, x, "┃ {}. {}".format(i, fn))
             current_line += 1
 
@@ -209,15 +209,6 @@ class Arena:
                 # Initialization
                 screen.clear()
 
-                # players play the game
-                if self.game_mode == "mvh":
-                    self.player.play("blue")
-                elif self.game_mode == "hvm":
-                    self.player.play("red")
-                elif self.game_mode == "mvm":
-                    self.player.play("blue")
-                    self.player.play("red")
-
                 # Rendering the board
                 self.draw_title(screen)
                 self.draw_frame(screen)
@@ -237,8 +228,21 @@ class Arena:
                 # refresh the screen
                 screen.refresh()
 
+                # players play the game
+                if self.game_mode == "mvh":
+                    self.player.play("blue")
+                elif self.game_mode == "hvm":
+                    self.player.play("red")
+                elif self.game_mode == "mvm":
+                    self.player.play("blue")
+                    self.player.play("red")
+                    if self.state.is_finished():
+                        self.save_game()
+                        break
+
                 # wait for next input
-                k = screen.getch()
+                if self.game_mode != "mvm":
+                    k = screen.getch()
 
         return draw_func
 
