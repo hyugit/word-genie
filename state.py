@@ -94,6 +94,7 @@ class State:
         return True
 
     def select_tiles(self, indices: [int]):
+        self.selected_tiles = []
         for i in indices:
             if 0 <= i <= 24:
                 self.selected_tiles.append(i)
@@ -301,8 +302,28 @@ class State:
         def r_i(idx):
             return 5 * (4 - idx % 5) + (idx // 5)
 
-        self.game_str = "".join([self.game_str[r_i(i)] for i, s in enumerate(self.game_str)])
-        self.state = [self.state[r_i(i)] for i in range(25)]
-        self.history = [[r(i) for i in h] for h in self.history]
-        self.backup_history = [[r(i) for i in bh] for bh in self.backup_history] if self.backup_history else None
-        self.selected_tiles = [r(i) for i in self.selected_tiles]
+        return self.reorganize_everything(r, r_i)
+
+    # provide a mapping function and an inverse mapping
+    # function to reorganize everything
+    def reorganize_everything(self, m, m_i=None):
+        m_i = m if m_i is None else m_i
+        self.game_str = "".join([self.game_str[m_i(i)] for i, s in enumerate(self.game_str)])
+        self.state = [self.state[m_i(i)] for i in range(25)]
+        self.history = [[m(i) for i in h] for h in self.history]
+        self.backup_history = [[m(i) for i in bh] for bh in self.backup_history] if self.backup_history else None
+        self.selected_tiles = [m(i) for i in self.selected_tiles]
+
+    # vertical flip
+    def flip(self, vertical=True):
+
+        def v(idx):
+            return 5 * (idx // 5) + 4 - idx % 5
+
+        def h(idx):
+            return 5 * (4 - idx // 5) + idx % 5
+
+        if vertical:
+            return self.reorganize_everything(v)
+        else:
+            return self.reorganize_everything(h)

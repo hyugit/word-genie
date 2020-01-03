@@ -198,6 +198,10 @@ class Arena:
                     self.show_recommendation = True
                 elif k == ord('t'):
                     self.state.rotate()
+                elif k == ord('v'):
+                    self.state.flip()
+                elif k == ord('b'):
+                    self.state.flip(vertical=False)
                 elif k == ord('['):
                     if self.page_number > 0:
                         self.page_number -= 1
