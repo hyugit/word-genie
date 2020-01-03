@@ -290,3 +290,19 @@ class State:
                 word = self.backup_history.pop(0)
                 self.select_tiles(word)
                 self.play_selected_word()
+
+    def rotate(self):
+        # mapping algorithm for indices:
+        #           r: new_y, new_x = x, 4 - y -- clockwise
+        #           r_i: new_y, new_x = 4 - x, y -- rotation inverse
+        def r(idx):
+            return 5 * (idx % 5) + (4 - idx // 5)
+
+        def r_i(idx):
+            return 5 * (4 - idx % 5) + (idx // 5)
+
+        self.game_str = "".join([self.game_str[r_i(i)] for i, s in enumerate(self.game_str)])
+        self.state = [self.state[r_i(i)] for i in range(25)]
+        self.history = [[r(i) for i in h] for h in self.history]
+        self.backup_history = [[r(i) for i in bh] for bh in self.backup_history] if self.backup_history else None
+        self.selected_tiles = [r(i) for i in self.selected_tiles]

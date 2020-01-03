@@ -196,6 +196,8 @@ class Arena:
                     self.save_game()
                 elif k == ord('r'):
                     self.show_recommendation = True
+                elif k == ord('t'):
+                    self.state.rotate()
                 elif k == ord('['):
                     if self.page_number > 0:
                         self.page_number -= 1
