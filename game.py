@@ -4,7 +4,7 @@ import curses
 from state import State
 from genie import Genie
 from arena import Arena
-from player import Player
+from agent import Agent
 
 
 class Game:
@@ -18,8 +18,8 @@ class Game:
         self.genie = Genie()
         self.genie.awake(game_str)
         self.state = State(genie=self.genie, game_str=game_str)
-        self.player = Player(genie=self.genie, state=self.state)
-        self.arena = Arena(state=self.state, start_y=1, start_x=2, mode=game_mode, player=self.player)
+        self.agent = Agent(genie=self.genie, state=self.state)
+        self.arena = Arena(state=self.state, start_y=1, start_x=2, mode=game_mode, agent=self.agent)
 
     def run(self):
         draw_arena = self.arena.generate_draw_func()

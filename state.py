@@ -198,11 +198,11 @@ class State:
         scores = self.get_score()
 
         efficiencies = {}
-        for player in ["blue", "red"]:
-            if scores[player] is 0:
-                efficiencies[player] = 0
+        for agent in ["blue", "red"]:
+            if scores[agent] is 0:
+                efficiencies[agent] = 0
             else:
-                efficiencies[player] = ptiles[player] / scores[player]
+                efficiencies[agent] = ptiles[agent] / scores[agent]
 
         return efficiencies
 
@@ -302,11 +302,11 @@ class State:
         def r_i(idx):
             return 5 * (4 - idx % 5) + (idx // 5)
 
-        return self.reorganize_everything(r, r_i)
+        return self.transform(r, r_i)
 
     # provide a mapping function and an inverse mapping
     # function to reorganize everything
-    def reorganize_everything(self, m, m_i=None):
+    def transform(self, m, m_i=None):
         m_i = m if m_i is None else m_i
         self.game_str = "".join([self.game_str[m_i(i)] for i, s in enumerate(self.game_str)])
         self.state = [self.state[m_i(i)] for i in range(25)]
@@ -314,7 +314,13 @@ class State:
         self.backup_history = [[m(i) for i in bh] for bh in self.backup_history] if self.backup_history else None
         self.selected_tiles = [m(i) for i in self.selected_tiles]
 
-    # vertical flip
+    def transpose(self):
+        def t(idx):
+            return 5 * (idx % 5) + idx // 5
+
+        return self.transform(t)
+
+    # vertical flip or horizontal flip if vertical=False
     def flip(self, vertical=True):
 
         def v(idx):
@@ -324,6 +330,6 @@ class State:
             return 5 * (4 - idx // 5) + idx % 5
 
         if vertical:
-            return self.reorganize_everything(v)
+            return self.transform(v)
         else:
-            return self.reorganize_everything(h)
+            return self.transform(h)

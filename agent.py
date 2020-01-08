@@ -3,7 +3,7 @@ from genie import Genie
 from state import State
 
 
-class Player:
+class Agent:
 
     def __init__(self, genie: Genie, state: State):
         self.genie = genie
@@ -13,9 +13,20 @@ class Player:
         if not self.should_play(color):
             return False
 
+        self._play()
+
+        return True
+
+    def should_play(self, color):
         if self.state.is_finished():
             return False
 
+        if self.state.get_current_player() == color:
+            return True
+
+        return False
+
+    def _play(self):
         indices = []
         while not indices:
             targets = [random.choice(range(0, 24)) for _ in range(4)]
@@ -24,11 +35,3 @@ class Player:
 
         self.state.select_tiles(indices)
         self.state.play_selected_word()
-
-        return True
-
-    def should_play(self, color):
-        if self.state.get_current_player() == color:
-            return True
-
-        return False

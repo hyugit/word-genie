@@ -39,7 +39,6 @@ class Genie:
         working_states = copy.deepcopy(state)
         working_states.select_tiles(indices)
         letters = working_states.get_selected_letters()
-        played_words = set(working_states.get_played_words())
         current_player = working_states.get_current_player()
 
         # setup decision making criteria
@@ -55,7 +54,9 @@ class Genie:
 
         # get full matches
         full_matches = set(self.ask(letters))
-        matches = full_matches.difference(played_words)
+
+        # remove used words
+        matches = full_matches.difference(set(working_states.get_played_words()))
 
         # get partial matches. When there is no match,
         # instead of enumerating all the possibilities,
@@ -72,10 +73,9 @@ class Genie:
         matches = sorted(list(matches), key=len, reverse=True)
 
         for m in matches:
-            plays = working_states.get_playable_options_from_letters(m, hint=indices)
-            for play in plays:
+            for opt in working_states.get_playable_options_from_letters(m, hint=indices):
                 tmp_states = copy.deepcopy(working_states)
-                tmp_states.select_tiles(play)
+                tmp_states.select_tiles(opt)
                 tmp_states.play_selected_word()
 
                 # get statistics
@@ -97,7 +97,7 @@ class Genie:
                 # if defence > best_defence or \
                 #         (defence == best_defence and score > best_score):
                 if score > best_score and defence >= best_defence:
-                    best_opt = play
+                    best_opt = opt
                     best_score = score
                     best_defence = defence
                     best_efficiency = efficiency

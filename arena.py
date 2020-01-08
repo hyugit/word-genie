@@ -6,7 +6,7 @@ import utils
 
 class Arena:
 
-    def __init__(self, state: State, start_y=0, start_x=0, mode=None, player=None):
+    def __init__(self, state: State, start_y=0, start_x=0, mode=None, agent=None):
         self.cursor_y = 0
         self.cursor_x = 0
         self.state = state
@@ -15,7 +15,7 @@ class Arena:
         self.show_recommendation = False
         self.page_number = 0
         self.game_mode = mode
-        self.player = player
+        self.agent = agent
 
     def draw_frame(self, screen):
         current_line = self.start_y + 3
@@ -234,14 +234,14 @@ class Arena:
                 # refresh the screen
                 screen.refresh()
 
-                # players play the game
+                # agents play the game
                 if self.game_mode == "mvh":
-                    self.player.play("blue")
+                    self.agent.play("blue")
                 elif self.game_mode == "hvm":
-                    self.player.play("red")
+                    self.agent.play("red")
                 elif self.game_mode == "mvm":
-                    self.player.play("blue")
-                    self.player.play("red")
+                    self.agent.play("blue")
+                    self.agent.play("red")
                     if self.state.is_finished():
                         self.save_game()
                         break
