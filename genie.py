@@ -122,18 +122,10 @@ class Genie:
         print("Reading word list...")
 
         with open(DEFAULT_WORDLIST) as wl:
-            line = wl.readline()
-
-            while line:
-                line = wl.readline()
-                word = line.strip()
-                index = "".join(sorted(word))
-
-                if index in self.dictionary:
-                    self.dictionary[index].append(word)
-
-                else:
-                    self.dictionary[index] = [word]
+            lines = wl.readlines()
+            words = [line.strip() for line in lines]
+            indices = ["".join(sorted(word)) for word in words]
+            self.dictionary = {i: w for i, w in zip(indices, words)}
 
     def trim(self, game):
         if self.game_str == game:

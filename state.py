@@ -1,4 +1,5 @@
 import copy
+import numpy as np
 
 
 class State:
@@ -126,9 +127,7 @@ class State:
 
         # calc dimensions and least common multiple
         dims = [len(idx) for idx in idx_mat]
-        lcm = 1
-        for d in dims:
-            lcm *= d
+        lcm = np.prod(dims)
 
         # initialize the options matrix
         opt_mat = [[]]*lcm
@@ -156,9 +155,6 @@ class State:
     def undo_selection(self):
         if self.selected_tiles:
             self.selected_tiles.pop()
-            return True
-
-        return False
 
     def is_selected_tile(self, y, x):
         for s in self.selected_tiles:
@@ -186,9 +182,11 @@ class State:
         blue = 0
         red = 0
         for i, s in enumerate(self.state):
-            if s == 1 and self.is_protected_tile(0, 0, idx=i):
+            if not self.is_protected_tile(0, 0, idx=i):
+                continue
+            if s == 1:
                 blue += 1
-            if s == -1 and self.is_protected_tile(0, 0, idx=i):
+            if s == -1:
                 red += 1
 
         return {"blue": blue, "red": red}
@@ -221,9 +219,9 @@ class State:
         if not self.genie.verify(word):
             return False
 
-        for tiles in self.history:
-            if word == self.get_word(tiles):
-                return False
+        # if word has been played before
+        if word in [self.get_word(tile) for tile in self.history]:
+            return False
 
         self.history.append(self.selected_tiles)
 
