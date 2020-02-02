@@ -9,8 +9,8 @@ from agent import Agent
 
 class Game:
 
-    def __init__(self):
-        game_mode = Game.parse_args() or "hvh"
+    def __init__(self, game_mode=None):
+        game_mode = game_mode if game_mode is not None else Game.parse_args() or "hvh"
         game_str = [random.choice("abcdefghijklmnopqrstuvwxyz") for _ in range(25)]
         game_str = "".join(game_str)
 

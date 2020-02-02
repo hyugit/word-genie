@@ -111,8 +111,6 @@ class State:
         if hint is None:
             hint = []
 
-        # TODO: import & use numpy and setup virtual env
-
         # initialize indices matrix
         idx_mat = [[i for i, x in enumerate(self.game_str) if x is l] for l in letters]
 

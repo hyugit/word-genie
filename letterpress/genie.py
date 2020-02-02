@@ -172,8 +172,6 @@ class Genie:
         return result
 
     def petrify(self):
-        print("Writing dictionary...")
-
         with open(DEFAULT_DICTIONARY, 'w') as df:
             for k in sorted(list(self.dictionary), key=len, reverse=True):
                 words = ",".join(self.dictionary.get(k) or [])
